@@ -310,3 +310,69 @@
     </script>
 </body>
 </html>
+<!-- Storage Display Meter -->
+<div id="storage-info">
+  <p>Used Storage: <span id="used-storage">Loading...</span> GB / <span id="total-storage">--</span> GB</p>
+</div>
+
+<!-- Upload Form -->
+<input type="file" id="fileInput">
+<button onclick="uploadFile()">Upload File</button>
+
+<script>
+const WEB_APP_URL = "YAHAN_APNA_APPS_SCRIPT_WEB_APP_URL_DAALEIN";
+
+// Fetch Live Storage Stats
+async function fetchStorage() {
+  try {
+    let response = await fetch(WEB_APP_URL);
+    let data = await response.json();
+    document.getElementById("used-storage").innerText = data.used;
+    document.getElementById("total-storage").innerText = data.total;
+  } catch (error) {
+    console.error("Error fetching storage:", error);
+  }
+}
+
+// Upload File to Drive
+async function uploadFile() {
+  let fileInput = document.getElementById("fileInput");
+  if (fileInput.files.length === 0) {
+    alert("Pehle file select karein!");
+    return;
+  }
+
+  let file = fileInput.files[0];
+  let reader = new FileReader();
+
+  reader.onload = async function() {
+    let base64Data = reader.result.split(',')[1];
+    let payload = {
+      filename: file.name,
+      mimeType: file.type,
+      bytes: base64Data
+    };
+
+    alert("Uploading... Kripya intezaar karein.");
+
+    let response = await fetch(WEB_APP_URL, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+
+    let result = await response.json();
+    if (result.status === "success") {
+      alert("File successfully upload ho gayi!");
+      fetchStorage(); // Storage update karne ke liye
+    } else {
+      alert("Upload fail ho gaya: " + result.message);
+    }
+  };
+
+  reader.readAsDataURL(file);
+}
+
+// Page load hote hi storage stats fetch karein
+window.onload = fetchStorage;
+      </script>
+      
