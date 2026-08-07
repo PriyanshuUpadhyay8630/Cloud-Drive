@@ -32,8 +32,8 @@
         .dropdown-content button.danger{color:var(--danger);}
         .show{display:block;}
         .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:56px;background:#0f172a;display:flex;justify-content:space-around;align-items:center;z-index:1000;border-top:1px solid #1e293b;}
-        .bottom-nav a{color:#94a3b8;text-decoration:none;font-size:0.65rem;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px;flex:1;text-align:center;}
-        .bottom-nav a i{font-size:1rem;}
+        .bottom-nav a{color:#94a3b8;text-decoration:none;font-size:0.6rem;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px;flex:1;text-align:center;}
+        .bottom-nav a i{font-size:0.95rem;}
         .bottom-nav a.active{color:#fff;font-weight:600;}
         .tab-content{display:none;}
         .tab-content.active{display:block;}
@@ -42,6 +42,7 @@
         @media(min-width:768px){
             body{padding-bottom:0;}
             .app-layout{flex-direction:row;}
+            .main{flex:1;}
             .bottom-nav{position:static;width:200px;height:auto;flex-direction:column;justify-content:flex-start;padding:10px;}
             .bottom-nav a{flex-direction:row;font-size:0.85rem;padding:10px;border-radius:6px;width:100%;gap:10px;margin-bottom:4px;}
         }
@@ -108,11 +109,11 @@
                     <div class="table-responsive">
                         <table><thead><tr><th>Name</th><th>Size</th><th>Action</th></tr></thead><tbody id="filesTableBody"></tbody></table>
                     </div>
+                </div>
 
-                    <div class="card" style="margin-top:12px;">
-                        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:8px;">
-                            <h3 style="font-size:0.85rem;"><i class="fa-solid fa-copy" style="color:var(--primary);"></i> Cleaner</h3>
-                        </div>
+                <div id="tab-duplicate" class="tab-content">
+                    <h2 style="font-size:1.1rem;margin-bottom:10px;">Duplicate Cleaner</h2>
+                    <div class="card">
                         <div style="display:flex;gap:6px;margin-bottom:8px;">
                             <button onclick="selectOnlyDuplicates()" class="btn" style="background:#6366f1;flex:1;justify-content:center;"><i class="fa-solid fa-check-double"></i> Select All</button>
                             <button onclick="deleteSelectedDuplicates()" class="btn btn-danger" style="flex:1;justify-content:center;"><i class="fa-solid fa-trash"></i> Delete</button>
@@ -133,6 +134,7 @@
             <a onclick="switchTab('upload')" id="menu-upload"><i class="fa-solid fa-upload"></i><span>Upload</span></a>
             <a onclick="switchTab('accounts')" id="menu-accounts"><i class="fa-brands fa-google"></i><span>Nodes</span></a>
             <a onclick="switchTab('files')" id="menu-files"><i class="fa-solid fa-folder"></i><span>Files</span></a>
+            <a onclick="switchTab('duplicate')" id="menu-duplicate"><i class="fa-solid fa-copy"></i><span>Duplicate</span></a>
             <a onclick="handleLogout()" style="color:var(--danger);"><i class="fa-solid fa-right-from-bracket"></i><span>Logout</span></a>
         </div>
     </div>
