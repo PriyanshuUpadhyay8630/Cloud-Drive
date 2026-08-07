@@ -8,37 +8,43 @@
     <style>
         :root{--bg:#f8fafc;--card:#fff;--text:#1e293b;--muted:#64748b;--primary:#4f46e5;--border:#e2e8f0;--danger:#ef4444;--success:#10b981;}
         *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif;}
-        body{background:var(--bg);color:var(--text);min-height:100vh;}
-        .app-layout{display:flex;min-height:100vh;width:100vw;}
-        .sidebar{width:200px;background:#0f172a;color:#94a3b8;display:flex;flex-direction:column;flex-shrink:0;}
-        .brand{padding:14px;font-weight:700;color:#fff;border-bottom:1px solid #1e293b;font-size:0.95rem;}
-        .menu{list-style:none;padding:8px;flex:1;}
-        .menu a{display:flex;align-items:center;gap:8px;padding:8px 10px;color:#94a3b8;text-decoration:none;border-radius:6px;cursor:pointer;margin-bottom:4px;font-size:0.85rem;}
-        .menu a:hover,.menu a.active{background:#1e293b;color:#fff;}
-        .main{flex:1;display:flex;flex-direction:column;min-width:0;}
-        .topbar{background:var(--card);padding:10px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;font-weight:600;font-size:0.85rem;}
-        .content{padding:14px;flex:1;}
-        .card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px;}
-        .grid-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:8px;}
-        .stat-box{background:#f1f5f9;padding:10px;border-radius:6px;text-align:center;}
-        .stat-box h4{font-size:0.7rem;color:var(--muted);text-transform:uppercase;}
-        .stat-box .val{font-size:1.2rem;font-weight:700;color:var(--primary);margin-top:2px;}
-        table{width:100%;border-collapse:collapse;background:var(--card);border-radius:6px;border:1px solid var(--border);}
-        th,td{padding:8px;text-align:left;border-bottom:1px solid var(--border);font-size:0.8rem;position:relative;}
-        th{background:#f8fafc;color:var(--muted);}
-        .btn{padding:6px 10px;border-radius:6px;border:none;font-weight:600;cursor:pointer;background:var(--primary);color:#fff;display:inline-flex;align-items:center;gap:4px;font-size:0.8rem;}
+        body{background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:70px;}
+        .app-layout{display:flex;flex-direction:column;min-height:100vh;width:100vw;}
+        .topbar{background:#0f172a;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:0.9rem;}
+        .brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:1rem;}
+        .content{padding:12px;flex:1;}
+        .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05);}
+        .grid-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;}
+        .stat-box{background:#f1f5f9;padding:10px;border-radius:8px;text-align:center;}
+        .stat-box h4{font-size:0.65rem;color:var(--muted);text-transform:uppercase;}
+        .stat-box .val{font-size:1.1rem;font-weight:700;color:var(--primary);margin-top:2px;}
+        .table-responsive{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:60px;margin-bottom:-60px;}
+        table{width:100%;border-collapse:collapse;background:var(--card);border-radius:8px;border:1px solid var(--border);margin-top:6px;}
+        th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);font-size:0.78rem;white-space:nowrap;}
+        th{background:#f8fafc;color:var(--muted);font-weight:600;}
+        .btn{padding:6px 12px;border-radius:6px;border:none;font-weight:600;cursor:pointer;background:var(--primary);color:#fff;display:inline-flex;align-items:center;gap:4px;font-size:0.75rem;}
         .btn-danger{background:var(--danger);}
-        input{width:100%;padding:8px;margin:4px 0 10px;border:1px solid var(--border);border-radius:6px;font-size:0.85rem;}
+        input{width:100%;padding:10px;margin:4px 0 10px;border:1px solid var(--border);border-radius:6px;font-size:0.85rem;}
         .dropdown{position:relative;display:inline-block;}
-        .dropbtn{background:none;border:none;font-size:1rem;color:var(--muted);cursor:pointer;padding:2px 6px;}
-        .dropdown-content{display:none;position:absolute;right:0;background:#fff;box-shadow:0 4px 12px rgba(0,0,0,0.1);border:1px solid var(--border);border-radius:6px;z-index:100;min-width:110px;}
-        .dropdown-content button,.dropdown-content a{width:100%;padding:6px 10px;text-align:left;background:none;border:none;font-size:0.8rem;display:flex;align-items:center;gap:6px;color:var(--text);text-decoration:none;cursor:pointer;}
+        .dropbtn{background:none;border:none;font-size:1.1rem;color:var(--muted);cursor:pointer;padding:4px 8px;}
+        .dropdown-content{display:none;position:absolute;right:0;bottom:100%;background:#fff;box-shadow:0 4px 12px rgba(0,0,0,0.15);border:1px solid var(--border);border-radius:6px;z-index:9999;min-width:100px;margin-bottom:4px;}
+        .dropdown-content button,.dropdown-content a{width:100%;padding:8px 10px;text-align:left;background:none;border:none;font-size:0.75rem;display:flex;align-items:center;gap:6px;color:var(--text);text-decoration:none;cursor:pointer;}
         .dropdown-content button.danger{color:var(--danger);}
         .show{display:block;}
+        .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:56px;background:#0f172a;display:flex;justify-content:space-around;align-items:center;z-index:1000;border-top:1px solid #1e293b;}
+        .bottom-nav a{color:#94a3b8;text-decoration:none;font-size:0.65rem;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px;flex:1;text-align:center;}
+        .bottom-nav a i{font-size:1rem;}
+        .bottom-nav a.active{color:#fff;font-weight:600;}
         .tab-content{display:none;}
         .tab-content.active{display:block;}
-        .auth-box{background:var(--card);padding:20px;border-radius:10px;border:1px solid var(--border);width:90%;max-width:320px;margin:60px auto;}
-        .badge-dup{background:#fee2e2;color:#dc2626;padding:2px 4px;border-radius:4px;font-size:0.7rem;font-weight:600;}
+        .auth-box{background:var(--card);padding:20px;border-radius:12px;border:1px solid var(--border);width:90%;max-width:320px;margin:80px auto;}
+        .badge-dup{background:#fee2e2;color:#dc2626;padding:2px 6px;border-radius:4px;font-size:0.65rem;font-weight:600;}
+        @media(min-width:768px){
+            body{padding-bottom:0;}
+            .app-layout{flex-direction:row;}
+            .bottom-nav{position:static;width:200px;height:auto;flex-direction:column;justify-content:flex-start;padding:10px;}
+            .bottom-nav a{flex-direction:row;font-size:0.85rem;padding:10px;border-radius:6px;width:100%;gap:10px;margin-bottom:4px;}
+        }
     </style>
 </head>
 <body>
@@ -48,35 +54,24 @@
             <form onsubmit="handleLogin(event)">
                 <label style="font-size:0.8rem;">Username</label><input type="text" id="loginUser" required placeholder="admin">
                 <label style="font-size:0.8rem;">Password</label><input type="password" id="loginPass" required placeholder="••••••••">
-                <button type="submit" class="btn" style="width:100%;justify-content:center;">Login</button>
+                <button type="submit" class="btn" style="width:100%;justify-content:center;padding:10px;">Login</button>
             </form>
         </div>
     </div>
 
     <div id="appScreen" style="display:none;" class="app-layout">
-        <div class="sidebar">
-            <div class="brand"><i class="fa-solid fa-cloud-arrow-up"></i> CloudVault Pro</div>
-            <ul class="menu">
-                <li><a onclick="switchTab('dash')" id="menu-dash" class="active"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
-                <li><a onclick="switchTab('upload')" id="menu-upload"><i class="fa-solid fa-upload"></i> Upload</a></li>
-                <li><a onclick="switchTab('accounts')" id="menu-accounts"><i class="fa-brands fa-google"></i> Gmail Nodes</a></li>
-                <li><a onclick="switchTab('files')" id="menu-files"><i class="fa-solid fa-folder"></i> Files</a></li>
-                <li><a onclick="handleLogout()" style="color:var(--danger);"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
-            </ul>
+        <div class="topbar">
+            <div class="brand"><i class="fa-solid fa-cloud-arrow-up" style="color:var(--primary);"></i> CloudVault Pro</div>
+            <span style="font-size:0.75rem;color:#94a3b8;"><b style="color:var(--success);">Online</b></span>
         </div>
 
         <div class="main">
-            <div class="topbar">
-                <span id="welcomeMsg">Welcome</span>
-                <span style="font-size:0.75rem;color:var(--muted);">Status: <b style="color:var(--success);">Online</b></span>
-            </div>
-
             <div class="content">
                 <div id="tab-dash" class="tab-content active">
-                    <h2 style="font-size:1.1rem;margin-bottom:8px;">System Overview</h2>
+                    <h2 style="font-size:1.1rem;margin-bottom:10px;" id="welcomeMsg">Welcome</h2>
                     <div class="card">
-                        <h3 style="font-size:0.8rem;color:var(--muted);">LIVE STORAGE METER</h3>
-                        <p style="font-size:1rem;font-weight:700;margin-top:4px;">Used: <span id="used-storage" style="color:var(--primary);">0 MB</span> / <span id="total-storage">14 GB</span></p>
+                        <h3 style="font-size:0.75rem;color:var(--muted);">LIVE STORAGE METER</h3>
+                        <p style="font-size:1.1rem;font-weight:700;margin-top:4px;">Used: <span id="used-storage" style="color:var(--primary);">0 MB</span> / <span id="total-storage">14 GB</span></p>
                     </div>
                     <div class="grid-stats">
                         <div class="stat-box"><h4>Connected Nodes</h4><div class="val" id="statNodes">0</div></div>
@@ -85,43 +80,46 @@
                 </div>
 
                 <div id="tab-upload" class="tab-content">
-                    <h2 style="font-size:1.1rem;margin-bottom:8px;">Upload File</h2>
-                    <div class="card" style="max-width:350px;">
+                    <h2 style="font-size:1.1rem;margin-bottom:10px;">Upload File</h2>
+                    <div class="card">
                         <input type="file" id="fileInput">
-                        <button onclick="uploadFile()" class="btn"><i class="fa-solid fa-cloud-arrow-up"></i> Upload</button>
+                        <button onclick="uploadFile()" class="btn" style="width:100%;justify-content:center;"><i class="fa-solid fa-cloud-arrow-up"></i> Upload File</button>
                     </div>
                 </div>
 
                 <div id="tab-accounts" class="tab-content">
-                    <h2 style="font-size:1.1rem;margin-bottom:8px;">Gmail Nodes</h2>
-                    <div class="card" style="max-width:350px;">
+                    <h2 style="font-size:1.1rem;margin-bottom:10px;">Gmail Nodes</h2>
+                    <div class="card">
                         <form onsubmit="handleAddAccount(event)">
                             <input type="email" id="newEmail" placeholder="example@gmail.com" required>
-                            <button type="submit" class="btn"><i class="fa-solid fa-plus"></i> Add Node</button>
+                            <button type="submit" class="btn" style="width:100%;justify-content:center;"><i class="fa-solid fa-plus"></i> Add Node</button>
                         </form>
                     </div>
-                    <div style="overflow-x:auto;">
-                        <table><thead><tr><th>Gmail</th><th>Limit</th><th>Action</th></tr></thead><tbody id="accountsTableBody"></tbody></table>
+                    <div class="table-responsive">
+                        <table>
+                            <thead><tr><th>Gmail</th><th>Used</th><th>Free</th><th>Limit</th><th>Action</th></tr></thead>
+                            <tbody id="accountsTableBody"></tbody>
+                        </table>
                     </div>
                 </div>
 
                 <div id="tab-files" class="tab-content">
-                    <h2 style="font-size:1.1rem;margin-bottom:8px;">Files Manager</h2>
-                    <div style="overflow-x:auto;">
+                    <h2 style="font-size:1.1rem;margin-bottom:10px;">Files Manager</h2>
+                    <div class="table-responsive">
                         <table><thead><tr><th>Name</th><th>Size</th><th>Action</th></tr></thead><tbody id="filesTableBody"></tbody></table>
                     </div>
 
-                    <div class="card" style="margin-top:15px;">
-                        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
-                            <h3 style="font-size:0.9rem;"><i class="fa-solid fa-copy" style="color:var(--primary);"></i> Duplicate Cleaner</h3>
-                            <div style="display:flex;gap:6px;">
-                                <button onclick="selectOnlyDuplicates()" class="btn" style="background:#6366f1;"><i class="fa-solid fa-check-double"></i> Select Duplicates Only</button>
-                                <button onclick="deleteSelectedDuplicates()" class="btn btn-danger"><i class="fa-solid fa-trash"></i> Delete Selected</button>
-                            </div>
+                    <div class="card" style="margin-top:12px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:8px;">
+                            <h3 style="font-size:0.85rem;"><i class="fa-solid fa-copy" style="color:var(--primary);"></i> Cleaner</h3>
                         </div>
-                        <div style="overflow-x:auto;">
+                        <div style="display:flex;gap:6px;margin-bottom:8px;">
+                            <button onclick="selectOnlyDuplicates()" class="btn" style="background:#6366f1;flex:1;justify-content:center;"><i class="fa-solid fa-check-double"></i> Select All</button>
+                            <button onclick="deleteSelectedDuplicates()" class="btn btn-danger" style="flex:1;justify-content:center;"><i class="fa-solid fa-trash"></i> Delete</button>
+                        </div>
+                        <div class="table-responsive">
                             <table>
-                                <thead><tr><th style="width:30px;">Sel</th><th>Name</th><th>Size</th><th>Status</th></tr></thead>
+                                <thead><tr><th style="width:25px;">Sel</th><th>Name</th><th>Size</th><th>Status</th></tr></thead>
                                 <tbody id="duplicateTableBody"></tbody>
                             </table>
                         </div>
@@ -129,9 +127,16 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <script>
+        <div class="bottom-nav">
+            <a onclick="switchTab('dash')" id="menu-dash" class="active"><i class="fa-solid fa-chart-pie"></i><span>Dash</span></a>
+            <a onclick="switchTab('upload')" id="menu-upload"><i class="fa-solid fa-upload"></i><span>Upload</span></a>
+            <a onclick="switchTab('accounts')" id="menu-accounts"><i class="fa-brands fa-google"></i><span>Nodes</span></a>
+            <a onclick="switchTab('files')" id="menu-files"><i class="fa-solid fa-folder"></i><span>Files</span></a>
+            <a onclick="handleLogout()" style="color:var(--danger);"><i class="fa-solid fa-right-from-bracket"></i><span>Logout</span></a>
+        </div>
+    </div>
+        <script>
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwb77ntXmTVMY4VaEpXVaysnQT48YwJaXy7TsvlXAAEij6e44Id4iuIpy6jMBCiKmTO7w/exec";
         let db = JSON.parse(localStorage.getItem('cloudVaultDB')) || { user: null, accounts: [{ id: 1, email: "node1@gmail.com", limit: 14 }], files: [] };
 
@@ -139,7 +144,7 @@
         function calculateStorageLimit() { return (db.accounts && db.accounts.length ? db.accounts.length : 1) * 14; }
 
         function formatBytes(b) {
-            if (!b) return '0 MB';
+            if (!b || b <= 0) return '0 MB';
             const k = 1024, s = ['Bytes', 'KB', 'MB', 'GB', 'TB'], i = Math.floor(Math.log(b) / Math.log(k));
             return parseFloat((b / Math.pow(k, i)).toFixed(2)) + ' ' + s[i];
         }
@@ -172,7 +177,7 @@
 
         function switchTab(t) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.menu a').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.bottom-nav a').forEach(el => el.classList.remove('active'));
             document.getElementById('tab-' + t).classList.add('active');
             document.getElementById('menu-' + t).classList.add('active');
             renderData();
@@ -253,13 +258,13 @@
         async function deleteSelectedDuplicates() {
             let boxes = document.querySelectorAll('.dup-checkbox:checked');
             if (!boxes.length) return alert("No duplicate files selected!");
-            if (confirm(`Delete ${boxes.length} duplicate files? (Original files will remain safe)`)) {
+            if (confirm(`Delete ${boxes.length} duplicate files?`)) {
                 for (let cb of boxes) {
                     let fid = parseFloat(cb.dataset.id), did = cb.dataset.driveId;
                     if (did && did !== 'null' && did !== 'undefined') { try { await fetch(WEB_APP_URL + "?action=deleteFile&id=" + did); } catch(e){} }
                     db.files = db.files.filter(f => f.id !== fid);
                 }
-                saveDB(); renderData(); fetchStorage(); alert("Duplicates deleted successfully!");
+                saveDB(); renderData(); fetchStorage(); alert("Duplicates deleted!");
             }
         }
 
@@ -267,14 +272,27 @@
             document.getElementById('statNodes').innerText = db.accounts.length;
             document.getElementById('statFiles').innerText = db.files.length;
             document.getElementById('total-storage').innerText = calculateStorageLimit() + " GB";
-            document.getElementById('used-storage').innerText = formatBytes(calculateTotalUsedBytes());
+            let totalUsedBytes = calculateTotalUsedBytes();
+            document.getElementById('used-storage').innerText = formatBytes(totalUsedBytes);
+
+            let nodeCount = db.accounts.length || 1;
+            let usedPerNode = totalUsedBytes / nodeCount;
 
             let accBody = document.getElementById('accountsTableBody'); accBody.innerHTML = '';
             db.accounts.forEach(a => {
-                accBody.innerHTML += `<tr><td>${a.email}</td><td>${a.limit} GB</td><td>
-                    <div class="dropdown"><button class="dropbtn" onclick="toggleDrop('acc-${a.id}')">⋮</button>
-                    <div id="acc-${a.id}" class="dropdown-content"><button class="danger" onclick="deleteAccount(${a.id})"><i class="fa-solid fa-trash"></i> Remove</button></div></div>
-                </td></tr>`;
+                let limitBytes = a.limit * 1073741824;
+                let freeBytes = Math.max(0, limitBytes - usedPerNode);
+
+                accBody.innerHTML += `<tr>
+                    <td>${a.email}</td>
+                    <td style="color:var(--primary);font-weight:600;">${formatBytes(usedPerNode)}</td>
+                    <td style="color:var(--success);font-weight:600;">${formatBytes(freeBytes)}</td>
+                    <td>${a.limit} GB</td>
+                    <td>
+                        <div class="dropdown"><button class="dropbtn" onclick="toggleDrop('acc-${a.id}')">⋮</button>
+                        <div id="acc-${a.id}" class="dropdown-content"><button class="danger" onclick="deleteAccount(${a.id})"><i class="fa-solid fa-trash"></i> Remove</button></div></div>
+                    </td>
+                </tr>`;
             });
 
             let fileBody = document.getElementById('filesTableBody'); fileBody.innerHTML = '';
@@ -298,7 +316,7 @@
                     dupBody.innerHTML += `<tr>
                         <td><input type="checkbox" class="dup-checkbox" data-id="${f.id}" data-drive-id="${f.driveId || ''}" data-is-duplicate="${isDup}"></td>
                         <td>${f.name}</td><td>${f.size}</td>
-                        <td>${isDup ? '<span class="badge-dup">Duplicate</span>' : '<span style="color:var(--success);font-weight:600;font-size:0.75rem;">Original</span>'}</td>
+                        <td>${isDup ? '<span class="badge-dup">Duplicate</span>' : '<span style="color:var(--success);font-weight:600;font-size:0.7rem;">Original</span>'}</td>
                     </tr>`;
                 });
             }
