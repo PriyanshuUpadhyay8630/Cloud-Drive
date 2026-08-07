@@ -186,7 +186,7 @@
 
         async function fetchStorage() {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 4000); // 4 Sec timeout to fix stuck loading
+            const timeoutId = setTimeout(() => controller.abort(), 4000);
 
             try {
                 let res = await fetch(WEB_APP_URL, { signal: controller.signal });
@@ -195,7 +195,6 @@
                 document.getElementById("used-storage").innerText = data.used || "0";
                 document.getElementById("total-storage").innerText = data.total || (db.accounts.length * 14);
             } catch (e) {
-                // If endpoint hangs or fails, fallback to local calculation
                 document.getElementById("used-storage").innerText = "0";
                 document.getElementById("total-storage").innerText = db.accounts.length * 14;
             }
@@ -241,8 +240,21 @@
 
         function handleAddAccount(e) {
             e.preventDefault();
-            let email = document.getElementById('newEmail').value.trim();
-            if(email) { db.accounts.push({ id: Date.now(), email: email, limit: 14 }); saveDB(); document.getElementById('newEmail').value = ''; renderData(); fetchStorage(); }
+            let email = document.getElementById('newEmail').value.trim().toLowerCase();
+            if(email) {
+                // Check if email already exists
+                let isDuplicate = db.accounts.some(acc => acc.email.toLowerCase() === email);
+                if (isDuplicate) {
+                    alert("This Gmail ID is already connected!");
+                    return;
+                }
+
+                db.accounts.push({ id: Date.now(), email: email, limit: 14 });
+                saveDB();
+                document.getElementById('newEmail').value = '';
+                renderData();
+                fetchStorage();
+            }
         }
 
         function toggleDrop(id) {
