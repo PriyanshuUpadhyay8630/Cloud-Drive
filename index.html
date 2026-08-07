@@ -7,36 +7,53 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --bg: #f8fafc; --card: #fff; --text: #1e293b; --muted: #64748b; --primary: #4f46e5; --border: #e2e8f0; --danger: #ef4444; }
+        :root { --bg: #f8fafc; --card: #fff; --text: #1e293b; --muted: #64748b; --primary: #4f46e5; --border: #e2e8f0; --danger: #ef4444; --success: #10b981; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body { background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow-x: hidden; }
-        .sidebar { width: 240px; background: #0f172a; color: #94a3b8; display: flex; flex-direction: column; }
-        .brand { padding: 20px; font-weight: 700; color: #fff; border-bottom: 1px solid #1e293b; }
+        body { background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+        
+        .app-layout { display: flex; min-height: 100vh; width: 100vw; }
+        .sidebar { width: 220px; background: #0f172a; color: #94a3b8; display: flex; flex-direction: column; flex-shrink: 0; }
+        .brand { padding: 16px; font-weight: 700; color: #fff; border-bottom: 1px solid #1e293b; font-size: 1rem; }
         .menu { list-style: none; padding: 10px; flex: 1; }
-        .menu a { display: flex; align-items: center; gap: 10px; padding: 10px; color: #94a3b8; text-decoration: none; border-radius: 6px; cursor: pointer; margin-bottom: 4px; }
+        .menu a { display: flex; align-items: center; gap: 8px; padding: 10px; color: #94a3b8; text-decoration: none; border-radius: 6px; cursor: pointer; margin-bottom: 4px; font-size: 0.9rem; }
         .menu a:hover, .menu a.active { background: #1e293b; color: #fff; }
-        .main { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
-        .topbar { background: var(--card); padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; font-weight: 600; }
-        .content { padding: 20px; }
+        
+        .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .topbar { background: var(--card); padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; font-weight: 600; font-size: 0.9rem; }
+        .content { padding: 16px; flex: 1; }
         .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 15px; }
+        
+        .grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-top: 10px; }
+        .stat-box { background: #f1f5f9; padding: 12px; border-radius: 6px; text-align: center; }
+        .stat-box h4 { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; }
+        .stat-box .val { font-size: 1.3rem; font-weight: 700; color: var(--primary); margin-top: 4px; }
+
         table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 8px; border: 1px solid var(--border); }
-        th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.9rem; position: relative; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.85rem; position: relative; }
         th { background: #f8fafc; color: var(--muted); }
-        .btn { padding: 8px 14px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; background: var(--primary); color: #fff; display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; }
-        input { width: 100%; padding: 10px; margin: 6px 0 12px; border: 1px solid var(--border); border-radius: 6px; }
+        
+        .btn { padding: 8px 12px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; background: var(--primary); color: #fff; display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; }
+        input { width: 100%; padding: 10px; margin: 6px 0 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem; }
+        
         .dropdown { position: relative; display: inline-block; }
         .dropbtn { background: none; border: none; font-size: 1.1rem; color: var(--muted); cursor: pointer; padding: 4px 8px; }
         .dropdown-content { display: none; position: absolute; right: 0; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 1px solid var(--border); border-radius: 6px; z-index: 100; min-width: 120px; }
         .dropdown-content button, .dropdown-content a { width: 100%; padding: 8px 12px; text-align: left; background: none; border: none; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; color: var(--text); text-decoration: none; cursor: pointer; }
         .dropdown-content button.danger { color: var(--danger); }
         .show { display: block; }
+        
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        .auth-box { background: var(--card); padding: 30px; border-radius: 12px; border: 1px solid var(--border); width: 100%; max-width: 350px; margin: 100px auto; }
+        .auth-box { background: var(--card); padding: 24px; border-radius: 12px; border: 1px solid var(--border); width: 90%; max-width: 340px; margin: 80px auto; }
+
         @media (max-width: 768px) {
-            body { flex-direction: column; }
+            .app-layout { flex-direction: column; }
             .sidebar { width: 100%; }
-            .menu { display: flex; overflow-x: auto; }
+            .brand { text-align: center; padding: 12px; }
+            .menu { display: flex; overflow-x: auto; padding: 6px; gap: 4px; }
+            .menu li { flex: 0 0 auto; }
+            .menu a { margin-bottom: 0; padding: 8px 10px; font-size: 0.8rem; white-space: nowrap; }
+            .content { padding: 12px; }
         }
     </style>
 </head>
@@ -44,16 +61,16 @@
 
     <div id="authScreen" style="width:100vw;">
         <div class="auth-box">
-            <h2 style="color:var(--primary); margin-bottom:15px;"><i class="fa-solid fa-cloud-arrow-up"></i> CloudVault</h2>
+            <h2 style="color:var(--primary); margin-bottom:15px; text-align:center;"><i class="fa-solid fa-cloud-arrow-up"></i> CloudVault</h2>
             <form onsubmit="handleLogin(event)">
-                <label>Username</label><input type="text" id="loginUser" required placeholder="admin">
-                <label>Password</label><input type="password" id="loginPass" required placeholder="••••••••">
+                <label style="font-size:0.85rem;">Username</label><input type="text" id="loginUser" required placeholder="admin">
+                <label style="font-size:0.85rem;">Password</label><input type="password" id="loginPass" required placeholder="••••••••">
                 <button type="submit" class="btn" style="width:100%; justify-content:center;">Login</button>
             </form>
         </div>
     </div>
 
-    <div id="appScreen" style="display:none; width:100vw; height:100vh;">
+    <div id="appScreen" style="display:none;" class="app-layout">
         <div class="sidebar">
             <div class="brand"><i class="fa-solid fa-cloud-arrow-up"></i> CloudVault Pro</div>
             <ul class="menu">
@@ -68,46 +85,61 @@
         <div class="main">
             <div class="topbar">
                 <span id="welcomeMsg">Welcome</span>
-                <span style="font-size:0.8rem; color:var(--muted);">Status: <b style="color:#10b981;">Online</b></span>
+                <span style="font-size:0.8rem; color:var(--muted);">Status: <b style="color:var(--success);" id="statusText">Online</b></span>
             </div>
 
             <div class="content">
                 <div id="tab-dash" class="tab-content active">
-                    <h2>System Overview</h2>
-                    <div class="card" style="margin-top:15px;">
-                        <h3>LIVE STORAGE METER</h3>
-                        <p style="font-size:1.2rem; font-weight:700; margin-top:5px;">Used: <span id="used-storage" style="color:var(--primary);">Loading...</span> GB / <span id="total-storage">--</span> GB</p>
+                    <h2 style="font-size:1.2rem; margin-bottom:10px;">System Overview</h2>
+                    <div class="card">
+                        <h3 style="font-size:0.85rem; color:var(--muted);">LIVE STORAGE METER</h3>
+                        <p style="font-size:1.1rem; font-weight:700; margin-top:5px;">Used: <span id="used-storage" style="color:var(--primary);">0</span> GB / <span id="total-storage">14</span> GB</p>
+                    </div>
+
+                    <div class="grid-stats">
+                        <div class="stat-box">
+                            <h4>Connected Nodes</h4>
+                            <div class="val" id="statNodes">0</div>
+                        </div>
+                        <div class="stat-box">
+                            <h4>Total Files</h4>
+                            <div class="val" id="statFiles">0</div>
+                        </div>
                     </div>
                 </div>
 
                 <div id="tab-upload" class="tab-content">
-                    <h2>Upload File</h2>
-                    <div class="card" style="max-width:400px; margin-top:15px;">
+                    <h2 style="font-size:1.2rem; margin-bottom:10px;">Upload File</h2>
+                    <div class="card" style="max-width:400px;">
                         <input type="file" id="fileInput">
                         <button onclick="uploadFile()" class="btn"><i class="fa-solid fa-cloud-arrow-up"></i> Upload</button>
                     </div>
                 </div>
 
                 <div id="tab-accounts" class="tab-content">
-                    <h2>Gmail Nodes</h2>
-                    <div class="card" style="max-width:400px; margin-top:15px;">
+                    <h2 style="font-size:1.2rem; margin-bottom:10px;">Gmail Nodes</h2>
+                    <div class="card" style="max-width:400px;">
                         <form onsubmit="handleAddAccount(event)">
                             <input type="email" id="newEmail" placeholder="example@gmail.com" required>
                             <button type="submit" class="btn"><i class="fa-solid fa-plus"></i> Add Node</button>
                         </form>
                     </div>
-                    <table>
-                        <thead><tr><th>Gmail</th><th>Limit</th><th>Action</th></tr></thead>
-                        <tbody id="accountsTableBody"></tbody>
-                    </table>
+                    <div style="overflow-x:auto;">
+                        <table>
+                            <thead><tr><th>Gmail</th><th>Limit</th><th>Action</th></tr></thead>
+                            <tbody id="accountsTableBody"></tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <div id="tab-files" class="tab-content">
-                    <h2>Files Manager</h2>
-                    <table style="margin-top:15px;">
-                        <thead><tr><th>Name</th><th>Size</th><th>Action</th></tr></thead>
-                        <tbody id="filesTableBody"></tbody>
-                    </table>
+                    <h2 style="font-size:1.2rem; margin-bottom:10px;">Files Manager</h2>
+                    <div style="overflow-x:auto;">
+                        <table>
+                            <thead><tr><th>Name</th><th>Size</th><th>Action</th></tr></thead>
+                            <tbody id="filesTableBody"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -124,7 +156,9 @@
                 document.getElementById('authScreen').style.display = 'none';
                 document.getElementById('appScreen').style.display = 'flex';
                 document.getElementById('welcomeMsg').innerText = "Welcome, " + db.user;
-                renderData(); fetchStorage(); syncDriveFiles();
+                renderData();
+                fetchStorage();
+                syncDriveFiles();
             } else {
                 document.getElementById('authScreen').style.display = 'block';
                 document.getElementById('appScreen').style.display = 'none';
@@ -151,17 +185,29 @@
         }
 
         async function fetchStorage() {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 4000); // 4 Sec timeout to fix stuck loading
+
             try {
-                let res = await fetch(WEB_APP_URL);
+                let res = await fetch(WEB_APP_URL, { signal: controller.signal });
+                clearTimeout(timeoutId);
                 let data = await res.json();
                 document.getElementById("used-storage").innerText = data.used || "0";
-                document.getElementById("total-storage").innerText = data.total || "14";
-            } catch (e) {}
+                document.getElementById("total-storage").innerText = data.total || (db.accounts.length * 14);
+            } catch (e) {
+                // If endpoint hangs or fails, fallback to local calculation
+                document.getElementById("used-storage").innerText = "0";
+                document.getElementById("total-storage").innerText = db.accounts.length * 14;
+            }
         }
 
         async function syncDriveFiles() {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 4000);
+
             try {
-                let res = await fetch(WEB_APP_URL + "?action=getFiles");
+                let res = await fetch(WEB_APP_URL + "?action=getFiles", { signal: controller.signal });
+                clearTimeout(timeoutId);
                 let result = await res.json();
                 if(result && result.files) {
                     result.files.forEach(df => {
@@ -180,7 +226,7 @@
             let file = fi.files[0], reader = new FileReader();
             reader.onload = async function() {
                 let payload = { filename: file.name, mimeType: file.type, bytes: reader.result.split(',')[1] };
-                alert("Uploading...");
+                alert("Uploading... Please wait.");
                 try {
                     let res = await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(payload) });
                     let result = await res.json();
@@ -196,7 +242,7 @@
         function handleAddAccount(e) {
             e.preventDefault();
             let email = document.getElementById('newEmail').value.trim();
-            if(email) { db.accounts.push({ id: Date.now(), email: email, limit: 14 }); saveDB(); document.getElementById('newEmail').value = ''; renderData(); }
+            if(email) { db.accounts.push({ id: Date.now(), email: email, limit: 14 }); saveDB(); document.getElementById('newEmail').value = ''; renderData(); fetchStorage(); }
         }
 
         function toggleDrop(id) {
@@ -206,7 +252,7 @@
 
         window.onclick = e => { if (!e.target.matches('.dropbtn')) document.querySelectorAll('.dropdown-content').forEach(el => el.classList.remove('show')); };
 
-        function deleteAccount(id) { if(confirm("Remove Node?")) { db.accounts = db.accounts.filter(a => a.id !== id); saveDB(); renderData(); } }
+        function deleteAccount(id) { if(confirm("Remove Node?")) { db.accounts = db.accounts.filter(a => a.id !== id); saveDB(); renderData(); fetchStorage(); } }
 
         async function deleteFile(id, driveId) {
             if(confirm("Delete File?")) {
@@ -216,6 +262,9 @@
         }
 
         function renderData() {
+            document.getElementById('statNodes').innerText = db.accounts.length;
+            document.getElementById('statFiles').innerText = db.files.length;
+
             let accBody = document.getElementById('accountsTableBody'); accBody.innerHTML = '';
             db.accounts.forEach(a => {
                 accBody.innerHTML += `<tr><td>${a.email}</td><td>${a.limit} GB</td><td>
