@@ -37,7 +37,8 @@
         .bottom-nav a.active{color:#fff;font-weight:600;}
         .tab-content{display:none;}
         .tab-content.active{display:block;}
-        .auth-box{background:var(--card);padding:20px;border-radius:12px;border:1px solid var(--border);width:90%;max-width:320px;margin:80px auto;}
+        #authScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;width:100vw;background:var(--bg);}
+        .auth-box{background:var(--card);padding:20px;border-radius:12px;border:1px solid var(--border);width:90%;max-width:320px;margin:auto;}
         .badge-dup{background:#fee2e2;color:#dc2626;padding:2px 6px;border-radius:4px;font-size:0.65rem;font-weight:600;}
         @media(min-width:768px){
             body{padding-bottom:0;}
@@ -49,7 +50,7 @@
     </style>
 </head>
 <body>
-    <div id="authScreen" style="width:100vw;">
+    <div id="authScreen">
         <div class="auth-box">
             <h2 style="color:var(--primary);margin-bottom:12px;text-align:center;"><i class="fa-solid fa-cloud-arrow-up"></i> CloudVault</h2>
             <form onsubmit="handleLogin(event)">
@@ -103,8 +104,7 @@
                         </table>
                     </div>
                 </div>
-
-                <div id="tab-files" class="tab-content">
+                                <div id="tab-files" class="tab-content">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
                         <h2 style="font-size:1.1rem;">Files Manager</h2>
                         <button onclick="syncDriveFiles(true)" class="btn" style="background:#059669;"><i class="fa-solid fa-rotate"></i> Sync Drive</button>
@@ -167,7 +167,7 @@
                 document.getElementById('welcomeMsg').innerText = "Welcome, " + db.user;
                 renderData(); syncDriveFiles();
             } else {
-                document.getElementById('authScreen').style.display = 'block';
+                document.getElementById('authScreen').style.display = 'flex';
                 document.getElementById('appScreen').style.display = 'none';
             }
         }
@@ -199,7 +199,7 @@
             }
 
             try {
-                let res = await fetch(WEB_APP_URL + "https://script.google.com/macros/s/AKfycbw3NP4MLbLPGnA_g4ScDV41O2vCL_HgFgZPEncCltDaWdh9gfmI8m4Vn3DV6iKiImofxg/exec");
+                let res = await fetch(WEB_APP_URL);
                 let r = await res.json();
                 if (r && r.files) {
                     db.files = r.files.map(df => ({
@@ -225,7 +225,7 @@
             r.onload = async function() {
                 alert("Uploading to Google Drive...");
                 try {
-                    let res = await fetch(WEB_APP_URL, "https://script.google.com/macros/s/AKfycbw3NP4MLbLPGnA_g4ScDV41O2vCL_HgFgZPEncCltDaWdh9gfmI8m4Vn3DV6iKiImofxg/exec", { method: "POST", body: JSON.stringify({ filename: file.name, mimeType: file.type, bytes: r.result.split(',')[1] }) });
+                    let res = await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ filename: file.name, mimeType: file.type, bytes: r.result.split(',')[1] }) });
                     let result = await res.json();
                     if (result.status === "success") {
                         alert("File uploaded successfully!");
@@ -267,7 +267,7 @@
         async function deleteFile(id, driveId) {
             if(confirm("Delete File from Google Drive?")) {
                 if(driveId) {
-                    try { await fetch(WEB_APP_URL + "https://script.google.com/macros/s/AKfycbw3NP4MLbLPGnA_g4ScDV41O2vCL_HgFgZPEncCltDaWdh9gfmI8m4Vn3DV6iKiImofxg/exec" + driveId); } catch(e){}
+                    try { await fetch(WEB_APP_URL + "?action=delete&id=" + driveId); } catch(e){}
                 }
                 db.files = db.files.filter(f => f.id !== id);
                 saveDB(); renderData();
@@ -284,7 +284,7 @@
             if (confirm(`Delete ${boxes.length} duplicate files?`)) {
                 for (let cb of boxes) {
                     let did = cb.dataset.driveId;
-                    if (did) { try { await fetch(WEB_APP_URL + "https://script.google.com/macros/s/AKfycbw3NP4MLbLPGnA_g4ScDV41O2vCL_HgFgZPEncCltDaWdh9gfmI8m4Vn3DV6iKiImofxg/exec" + did); } catch(e){} }
+                    if (did) { try { await fetch(WEB_APP_URL + "?action=delete&id=" + did); } catch(e){} }
                     db.files = db.files.filter(f => f.driveId !== did);
                 }
                 saveDB(); renderData(); alert("Duplicates deleted!");
