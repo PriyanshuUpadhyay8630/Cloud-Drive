@@ -38,15 +38,14 @@
         .bottom-nav a.active{color:#fff;font-weight:600;}
         .tab-content{display:none;}
         .tab-content.active{display:block;}
-        #authScreen{position:fixed;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:999999;pointer-events:auto;}
+        #authScreen{position:fixed;top:0;left:0;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:999999;touch-action:manipulation;pointer-events:auto;}
         .auth-box{background:var(--card);padding:25px;border-radius:12px;border:1px solid var(--border);width:90%;max-width:320px;box-shadow:0 10px 25px rgba(0,0,0,0.1);pointer-events:auto;}
         .badge-dup{background:#fee2e2;color:#dc2626;padding:2px 6px;border-radius:4px;font-size:0.65rem;font-weight:600;}
         @media(min-width:768px){body{padding-bottom:0;}.app-layout{flex-direction:row;}.main{flex:1;}.bottom-nav{position:static;width:200px;height:auto;flex-direction:column;padding:10px;}.bottom-nav a{flex-direction:row;font-size:0.9rem;padding:12px;width:100%;}}
     </style>
 </head>
 <body>
-    <div id="authScreen" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:999999; display:flex; align-items:center; justify-content:center; background:#f8fafc; touch-action:manipulation; pointer-events:auto;">
-        
+    <div id="authScreen">
         <div class="auth-box">
             <h2 style="color:var(--primary);margin-bottom:15px;text-align:center;"><i class="fa-solid fa-cloud-arrow-up"></i> CloudVault</h2>
             <form onsubmit="handleLogin(event)" style="pointer-events:auto;">
@@ -134,25 +133,208 @@
     <script>
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw3NP4MLbLPGnA_g4ScDV41O2vCL_HgFgZPEncCltDaWdh9gfmI8m4Vn3DV6iKiImofxg/exec";
         let db = JSON.parse(localStorage.getItem('cloudVaultDB')) || { user: null, accounts: [], files: [] };
+
         function saveDB() { localStorage.setItem('cloudVaultDB', JSON.stringify(db)); }
         function calculateStorageLimit() { return db.accounts.length * 14; }
         function formatBytes(b) { if (!b || b <= 0) return '0 MB'; const k = 1024, s = ['Bytes', 'KB', 'MB', 'GB', 'TB'], i = Math.floor(Math.log(b) / Math.log(k)); return parseFloat((b / Math.pow(k, i)).toFixed(2)) + ' ' + s[i]; }
         function calculateTotalUsedBytes() { let t = 0; db.files.forEach(f => { t += f.sizeBytes ? f.sizeBytes : 0; }); return t; }
-        function checkAuth() { if (db.user) { document.getElementById('authScreen').style.display = 'none'; document.getElementById('appScreen').style.display = 'flex'; document.getElementById('welcomeMsg').innerText = "Welcome, " + db.user; renderData(); syncDriveFiles(); } else { document.getElementById('authScreen').style.display = 'flex'; document.getElementById('appScreen').style.display = 'none'; } }
-        function handleLogin(e) { e.preventDefault(); let u = document.getElementById('loginUser').value.trim(), p = document.getElementById('loginPass').value.trim(); if ((u==='admin'&&p==='adminpassword')||(u==='user1'&&p==='user123')) { db.user = u; saveDB(); checkAuth(); } else alert('Wrong User/Pass!'); }
+
+        function checkAuth() { 
+            if (db.user) { 
+                document.getElementById('authScreen').style.display = 'none'; 
+                document.getElementById('appScreen').style.display = 'flex'; 
+                document.getElementById('welcomeMsg').innerText = "Welcome, " + db.user; 
+                renderData(); 
+                syncDriveFiles(); 
+            } else { 
+                document.getElementById('authScreen').style.display = 'flex'; 
+                document.getElementById('appScreen').style.display = 'none'; 
+            } 
+        }
+
+        function handleLogin(e) { 
+            e.preventDefault(); 
+            let u = document.getElementById('loginUser').value.trim(), p = document.getElementById('loginPass').value.trim(); 
+            if ((u==='admin'&&p==='adminpassword')||(u==='user1'&&p==='user123')) { 
+                db.user = u; 
+                saveDB(); 
+                checkAuth(); 
+            } else alert('Wrong User/Pass!'); 
+        }
+
         function handleLogout() { db.user = null; saveDB(); checkAuth(); }
-        function switchTab(t) { document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active')); document.querySelectorAll('.bottom-nav a').forEach(el => el.classList.remove('active')); document.getElementById('tab-' + t).classList.add('active'); document.getElementById('menu-' + t).classList.add('active'); if (t === 'files') syncDriveFiles(); renderData(); }
-        async function syncDriveFiles(manual = false) { if (db.accounts.length === 0) { db.files = []; saveDB(); renderData(); if (manual) alert("No Gmail Node added!"); return; } try { let res = await fetch(WEB_APP_URL); let r = await res.json(); if (r && r.files) { db.files = r.files.map(df => ({ id: df.id, driveId: df.id, name: df.name, size: formatBytes(df.sizeBytes), sizeBytes: df.sizeBytes || 0, url: df.url })); saveDB(); renderData(); if (manual) alert("Synced!"); } } catch (e) { if (manual) alert("Failed!"); } }
-        async function uploadFile() { if (db.accounts.length === 0) return alert("Add Node!"); let fi = document.getElementById("fileInput"); if (!fi.files.length) return alert("Select file!"); let file = fi.files[0], r = new FileReader(); r.onload = async function() { alert("Uploading..."); try { let res = await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ filename: file.name, mimeType: file.type, bytes: r.result.split(',')[1] }) }); let result = await res.json(); if (result.status === "success") { alert("Uploaded!"); fi.value = ''; await syncDriveFiles(); switchTab('files'); } else alert("Failed"); } catch(e) { alert("Error!"); } }; r.readAsDataURL(file); }
-        function handleAddAccount(e) { e.preventDefault(); let email = document.getElementById('newEmail').value.trim().toLowerCase(); if(email) { if (db.accounts.some(a => a.email.toLowerCase() === email)) return alert("Already connected!"); db.accounts.push({ id: Date.now(), email: email, limit: 14 }); saveDB(); document.getElementById('newEmail').value = ''; syncDriveFiles(); renderData(); } }
-        function toggleDrop(id) { document.querySelectorAll('.dropdown-content').forEach(el => { if(el.id !== id) el.classList.remove('show'); }); document.getElementById(id).classList.toggle('show'); }
+
+        function switchTab(t) { 
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active')); 
+            document.querySelectorAll('.bottom-nav a').forEach(el => el.classList.remove('active')); 
+            document.getElementById('tab-' + t).classList.add('active'); 
+            document.getElementById('menu-' + t).classList.add('active'); 
+            if (t === 'files') syncDriveFiles(); 
+            renderData(); 
+        }
+
+        async function syncDriveFiles(manual = false) { 
+            if (db.accounts.length === 0) { 
+                db.files = []; 
+                saveDB(); 
+                renderData(); 
+                if (manual) alert("Please add at least one Gmail Node first!"); 
+                return; 
+            } 
+
+            try { 
+                let res = await fetch(WEB_APP_URL); 
+                let r = await res.json(); 
+                if (r && r.files) { 
+                    db.files = r.files.map(df => ({ 
+                        id: df.id, 
+                        driveId: df.id, 
+                        name: df.name, 
+                        size: formatBytes(df.sizeBytes), 
+                        sizeBytes: df.sizeBytes || 0, 
+                        url: df.url 
+                    })); 
+                    saveDB(); 
+                    renderData(); 
+                    if (manual) alert("Drive files synced successfully!"); 
+                } else {
+                    if (manual) alert("No files found or Apps Script returned empty data.");
+                }
+            } catch (e) { 
+                if (manual) alert("Sync failed. Check Google Apps Script deployment permissions!"); 
+            } 
+        }
+
+        async function uploadFile() { 
+            if (db.accounts.length === 0) return alert("Please add a Gmail Node first!"); 
+            let fi = document.getElementById("fileInput"); 
+            if (!fi.files.length) return alert("Select a file!"); 
+            let file = fi.files[0], r = new FileReader(); 
+            r.onload = async function() { 
+                alert("Uploading to Google Drive..."); 
+                try { 
+                    let res = await fetch(WEB_APP_URL, { 
+                        method: "POST", 
+                        body: JSON.stringify({ filename: file.name, mimeType: file.type, bytes: r.result.split(',')[1] }) 
+                    }); 
+                    let result = await res.json(); 
+                    if (result.status === "success") { 
+                        alert("File uploaded successfully!"); 
+                        fi.value = ''; 
+                        await syncDriveFiles(); 
+                        switchTab('files'); 
+                    } else alert("Upload failed: " + (result.message || "Unknown error")); 
+                } catch(e) { alert("Upload connection error!"); } 
+            }; 
+            r.readAsDataURL(file); 
+        }
+
+        function handleAddAccount(e) { 
+            e.preventDefault(); 
+            let email = document.getElementById('newEmail').value.trim().toLowerCase(); 
+            if(email) { 
+                if (db.accounts.some(a => a.email.toLowerCase() === email)) return alert("Gmail ID already connected!"); 
+                db.accounts.push({ id: Date.now(), email: email, limit: 14 }); 
+                saveDB(); 
+                document.getElementById('newEmail').value = ''; 
+                syncDriveFiles(); 
+                renderData(); 
+            } 
+        }
+
+        function toggleDrop(id) { 
+            document.querySelectorAll('.dropdown-content').forEach(el => { if(el.id !== id) el.classList.remove('show'); }); 
+            document.getElementById(id).classList.toggle('show'); 
+        }
+
         window.onclick = e => { if (!e.target.matches('.dropbtn')) document.querySelectorAll('.dropdown-content').forEach(el => el.classList.remove('show')); };
-        function deleteAccount(id) { if(confirm("Remove?")) { db.accounts = db.accounts.filter(a => a.id !== id); if (db.accounts.length === 0) db.files = []; saveDB(); renderData(); } }
-        async function deleteFile(id, driveId) { if(confirm("Delete from Drive?")) { if(driveId) { try { await fetch(WEB_APP_URL + "?action=delete&id=" + driveId); } catch(e){} } db.files = db.files.filter(f => f.id !== id); saveDB(); renderData(); } }
-        function selectOnlyDuplicates() { document.querySelectorAll('.dup-checkbox').forEach(cb => { cb.checked = (cb.dataset.isDuplicate === "true"); }); }
-        async function deleteSelectedDuplicates() { let boxes = document.querySelectorAll('.dup-checkbox:checked'); if (!boxes.length) return alert("No selection!"); if (confirm(`Delete ${boxes.length} files?`)) { for (let cb of boxes) { let did = cb.dataset.driveId; if (did) { try { await fetch(WEB_APP_URL + "?action=delete&id=" + did); } catch(e){} } db.files = db.files.filter(f => f.driveId !== did); } saveDB(); renderData(); alert("Deleted!"); } }
-        function renderData() { document.getElementById('statNodes').innerText = db.accounts.length; document.getElementById('statFiles').innerText = db.files.length; document.getElementById('total-storage').innerText = calculateStorageLimit() + " GB"; let totalUsedBytes = calculateTotalUsedBytes(); document.getElementById('used-storage').innerText = formatBytes(totalUsedBytes); let nodeCount = db.accounts.length || 1; let usedPerNode = db.accounts.length ? (totalUsedBytes / nodeCount) : 0; let accBody = document.getElementById('accountsTableBody'); accBody.innerHTML = ''; if (!db.accounts.length) { accBody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--muted);">No Nodes.</td></tr>`; } else { db.accounts.forEach(a => { let limitBytes = a.limit * 1073741824; let freeBytes = Math.max(0, limitBytes - usedPerNode); accBody.innerHTML += `<tr><td>${a.email}</td><td>${formatBytes(usedPerNode)}</td><td>${formatBytes(freeBytes)}</td><td>${a.limit} GB</td><td><div class="dropdown"><button class="dropbtn" onclick="toggleDrop('acc-${a.id}')">⋮</button><div id="acc-${a.id}" class="dropdown-content"><button class="danger" onclick="deleteAccount(${a.id})"><i class="fa-solid fa-trash"></i> Remove</button></div></div></td></tr>`; }); } let fileBody = document.getElementById('filesTableBody'); fileBody.innerHTML = ''; if (!db.files.length) { fileBody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--muted);">No files.</td></tr>`; } else { db.files.forEach(f => { fileBody.innerHTML += `<tr><td>${f.name}</td><td>${f.size}</td><td><div class="dropdown"><button class="dropbtn" onclick="toggleDrop('file-${f.id}')">⋮</button><div id="file-${f.id}" class="dropdown-content"><a href="${f.url || '#'}" target="_blank"><i class="fa-solid fa-eye"></i> View</a><button class="danger" onclick="deleteFile('${f.id}', '${f.driveId || ''}')"><i class="fa-solid fa-trash"></i> Delete</button></div></div></td></tr>`; }); } let dupBody = document.getElementById('duplicateTableBody'); dupBody.innerHTML = ''; let seen = new Set(); if (!db.files.length) { dupBody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--muted);">No files.</td></tr>`; } else { db.files.forEach(f => { let isDup = seen.has(f.name.toLowerCase()); seen.add(f.name.toLowerCase()); dupBody.innerHTML += `<tr><td><input type="checkbox" class="dup-checkbox" data-id="${f.id}" data-drive-id="${f.driveId || ''}" data-is-duplicate="${isDup}"></td><td>${f.name}</td><td>${f.size}</td><td>${isDup ? '<span class="badge-dup">Duplicate</span>' : '<span style="color:var(--success);font-weight:600;font-size:0.7rem;">Original</span>'}</td></tr>`; }); } } window.onload = checkAuth;
+
+        function deleteAccount(id) { 
+            if(confirm("Remove Node?")) { 
+                db.accounts = db.accounts.filter(a => a.id !== id); 
+                if (db.accounts.length === 0) db.files = []; 
+                saveDB(); 
+                renderData(); 
+            } 
+        }
+
+        async function deleteFile(id, driveId) { 
+            if(confirm("Delete File from Google Drive?")) { 
+                if(driveId) { 
+                    try { await fetch(WEB_APP_URL + "?action=delete&id=" + driveId); } catch(e){} 
+                } 
+                db.files = db.files.filter(f => f.id !== id); 
+                saveDB(); 
+                renderData(); 
+            } 
+        }
+
+        function selectOnlyDuplicates() { 
+            document.querySelectorAll('.dup-checkbox').forEach(cb => { cb.checked = (cb.dataset.isDuplicate === "true"); }); 
+        }
+
+        async function deleteSelectedDuplicates() { 
+            let boxes = document.querySelectorAll('.dup-checkbox:checked'); 
+            if (!boxes.length) return alert("No duplicate files selected!"); 
+            if (confirm(`Delete ${boxes.length} duplicate files?`)) { 
+                for (let cb of boxes) { 
+                    let did = cb.dataset.driveId; 
+                    if (did) { try { await fetch(WEB_APP_URL + "?action=delete&id=" + did); } catch(e){} } 
+                    db.files = db.files.filter(f => f.driveId !== did); 
+                } 
+                saveDB(); 
+                renderData(); 
+                alert("Duplicates deleted!"); 
+            } 
+        }
+
+        function renderData() { 
+            document.getElementById('statNodes').innerText = db.accounts.length; 
+            document.getElementById('statFiles').innerText = db.files.length; 
+            document.getElementById('total-storage').innerText = calculateStorageLimit() + " GB"; 
+            let totalUsedBytes = calculateTotalUsedBytes(); 
+            document.getElementById('used-storage').innerText = formatBytes(totalUsedBytes); 
+
+            let nodeCount = db.accounts.length || 1; 
+            let usedPerNode = db.accounts.length ? (totalUsedBytes / nodeCount) : 0; 
+
+            let accBody = document.getElementById('accountsTableBody'); 
+            accBody.innerHTML = ''; 
+            if (!db.accounts.length) { 
+                accBody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--muted);">No Gmail Node connected.</td></tr>`; 
+            } else { 
+                db.accounts.forEach(a => { 
+                    let limitBytes = a.limit * 1073741824; 
+                    let freeBytes = Math.max(0, limitBytes - usedPerNode); 
+                    accBody.innerHTML += `<tr><td>${a.email}</td><td>${formatBytes(usedPerNode)}</td><td>${formatBytes(freeBytes)}</td><td>${a.limit} GB</td><td><div class="dropdown"><button class="dropbtn" onclick="toggleDrop('acc-${a.id}')">⋮</button><div id="acc-${a.id}" class="dropdown-content"><button class="danger" onclick="deleteAccount(${a.id})"><i class="fa-solid fa-trash"></i> Remove</button></div></div></td></tr>`; 
+                }); 
+            } 
+
+            let fileBody = document.getElementById('filesTableBody'); 
+            fileBody.innerHTML = ''; 
+            if (!db.files.length) { 
+                fileBody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--muted);">No files found. Add Node or Upload.</td></tr>`; 
+            } else { 
+                db.files.forEach(f => { 
+                    fileBody.innerHTML += `<tr><td>${f.name}</td><td>${f.size}</td><td><div class="dropdown"><button class="dropbtn" onclick="toggleDrop('file-${f.id}')">⋮</button><div id="file-${f.id}" class="dropdown-content"><a href="${f.url || '#'}" target="_blank"><i class="fa-solid fa-eye"></i> View</a><button class="danger" onclick="deleteFile('${f.id}', '${f.driveId || ''}')"><i class="fa-solid fa-trash"></i> Delete</button></div></div></td></tr>`; 
+                }); 
+            } 
+
+            let dupBody = document.getElementById('duplicateTableBody'); 
+            dupBody.innerHTML = ''; 
+            let seen = new Set(); 
+            if (!db.files.length) { 
+                dupBody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--muted);">No files.</td></tr>`; 
+            } else { 
+                db.files.forEach(f => { 
+                    let isDup = seen.has(f.name.toLowerCase()); 
+                    seen.add(f.name.toLowerCase()); 
+                    dupBody.innerHTML += `<tr><td><input type="checkbox" class="dup-checkbox" data-id="${f.id}" data-drive-id="${f.driveId || ''}" data-is-duplicate="${isDup}"></td><td>${f.name}</td><td>${f.size}</td><td>${isDup ? '<span class="badge-dup">Duplicate</span>' : '<span style="color:var(--success);font-weight:600;font-size:0.7rem;">Original</span>'}</td></tr>`; 
+                }); 
+            } 
+        } 
+
+        window.onload = checkAuth;
     </script>
 </body>
 </html>
-
