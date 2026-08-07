@@ -151,6 +151,12 @@
 
         function saveDB() { localStorage.setItem('cloudVaultDB', JSON.stringify(db)); }
 
+        function calculateStorageLimit() {
+            // Calculated dynamically from saved nodes (14 GB per node)
+            const nodeCount = db.accounts && db.accounts.length > 0 ? db.accounts.length : 1;
+            return nodeCount * 14;
+        }
+
         function checkAuth() {
             if (db.user) {
                 document.getElementById('authScreen').style.display = 'none';
@@ -185,24 +191,26 @@
         }
 
         async function fetchStorage() {
+            // Always set total storage accurately based on connected Gmail accounts
+            const totalGB = calculateStorageLimit();
+            document.getElementById("total-storage").innerText = totalGB;
+
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 4000);
+            const timeoutId = setTimeout(() => controller.abort(), 3000);
 
             try {
                 let res = await fetch(WEB_APP_URL, { signal: controller.signal });
                 clearTimeout(timeoutId);
                 let data = await res.json();
                 document.getElementById("used-storage").innerText = data.used || "0";
-                document.getElementById("total-storage").innerText = data.total || (db.accounts.length * 14);
             } catch (e) {
                 document.getElementById("used-storage").innerText = "0";
-                document.getElementById("total-storage").innerText = db.accounts.length * 14;
             }
         }
 
         async function syncDriveFiles() {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 4000);
+            const timeoutId = setTimeout(() => controller.abort(), 3000);
 
             try {
                 let res = await fetch(WEB_APP_URL + "?action=getFiles", { signal: controller.signal });
@@ -242,7 +250,6 @@
             e.preventDefault();
             let email = document.getElementById('newEmail').value.trim().toLowerCase();
             if(email) {
-                // Check if email already exists
                 let isDuplicate = db.accounts.some(acc => acc.email.toLowerCase() === email);
                 if (isDuplicate) {
                     alert("This Gmail ID is already connected!");
@@ -264,7 +271,14 @@
 
         window.onclick = e => { if (!e.target.matches('.dropbtn')) document.querySelectorAll('.dropdown-content').forEach(el => el.classList.remove('show')); };
 
-        function deleteAccount(id) { if(confirm("Remove Node?")) { db.accounts = db.accounts.filter(a => a.id !== id); saveDB(); renderData(); fetchStorage(); } }
+        function deleteAccount(id) { 
+            if(confirm("Remove Node?")) { 
+                db.accounts = db.accounts.filter(a => a.id !== id); 
+                saveDB(); 
+                renderData(); 
+                fetchStorage(); 
+            } 
+        }
 
         async function deleteFile(id, driveId) {
             if(confirm("Delete File?")) {
@@ -276,6 +290,7 @@
         function renderData() {
             document.getElementById('statNodes').innerText = db.accounts.length;
             document.getElementById('statFiles').innerText = db.files.length;
+            document.getElementById('total-storage').innerText = calculateStorageLimit();
 
             let accBody = document.getElementById('accountsTableBody'); accBody.innerHTML = '';
             db.accounts.forEach(a => {
