@@ -39,6 +39,51 @@
     // App Script Ka Web App URL yahan paste karo
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby-WW0rQBjF_L7EVatkqIL-hqw6_ZaGZc2ZepTTyLQpf4sokCsV2zSovW2G2eFdNLTh6g/exec";
 
+document.getElementById("adminLoginForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    const userVal = document.getElementById("username").value;
+    const passVal = document.getElementById("password").value;
+    const msgBox = document.getElementById("msg");
+    const btn = document.getElementById("submitBtn");
+
+    msgBox.style.color = "#38bdf8";
+    msgBox.innerText = "Checking credentials...";
+    btn.disabled = true;
+
+    // Body ko URLSearchParams ke format me bhejo
+    const payload = new URLSearchParams();
+    payload.append("action", "login");
+    payload.append("username", userVal);
+    payload.append("password", passVal);
+
+    fetch(SCRIPT_URL, {
+        method: "POST",
+        body: payload
+    })
+    .then(res => res.json())
+    .then(data => {
+        btn.disabled = false;
+        if (data.status === "success") {
+            msgBox.style.color = "#4ade80";
+            msgBox.innerText = "Login Successful! Redirecting...";
+            
+            setTimeout(() => {
+                window.location.href = "dashboard.html";
+            }, 1000);
+        } else {
+            msgBox.style.color = "#f87171";
+            msgBox.innerText = data.message || "Wrong Username/Password!";
+        }
+    })
+    .catch(err => {
+        btn.disabled = false;
+        msgBox.style.color = "#f87171";
+        msgBox.innerText = "Connection Error! Check Console.";
+        console.error("Fetch Error:", err);
+    });
+});
+
     document.getElementById("adminLoginForm").addEventListener("submit", function(e) {
         e.preventDefault(); // Page reloading ko rokta hai
 
