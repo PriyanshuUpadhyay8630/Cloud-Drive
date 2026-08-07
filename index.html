@@ -72,7 +72,7 @@
                     <h2 style="font-size:1.1rem;margin-bottom:10px;" id="welcomeMsg">Welcome</h2>
                     <div class="card">
                         <h3 style="font-size:0.75rem;color:var(--muted);">LIVE STORAGE METER</h3>
-                        <p style="font-size:1.1rem;font-weight:700;margin-top:4px;">Used: <span id="used-storage" style="color:var(--primary);">0 MB</span> / <span id="total-storage">14 GB</span></p>
+                        <p style="font-size:1.1rem;font-weight:700;margin-top:4px;">Used: <span id="used-storage" style="color:var(--primary);">0 MB</span> / <span id="total-storage">0 GB</span></p>
                     </div>
                     <div class="grid-stats">
                         <div class="stat-box"><h4>Connected Nodes</h4><div class="val" id="statNodes">0</div></div>
@@ -105,7 +105,10 @@
                 </div>
 
                 <div id="tab-files" class="tab-content">
-                    <h2 style="font-size:1.1rem;margin-bottom:10px;">Files Manager</h2>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                        <h2 style="font-size:1.1rem;">Files Manager</h2>
+                        <button onclick="syncDriveFiles(true)" class="btn" style="background:#059669;"><i class="fa-solid fa-rotate"></i> Sync Drive</button>
+                    </div>
                     <div class="table-responsive">
                         <table><thead><tr><th>Name</th><th>Size</th><th>Action</th></tr></thead><tbody id="filesTableBody"></tbody></table>
                     </div>
@@ -138,12 +141,12 @@
             <a onclick="handleLogout()" style="color:var(--danger);"><i class="fa-solid fa-right-from-bracket"></i><span>Logout</span></a>
         </div>
     </div>
-        <script>
+    <script>
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwb77ntXmTVMY4VaEpXVaysnQT48YwJaXy7TsvlXAAEij6e44Id4iuIpy6jMBCiKmTO7w/exec";
-        let db = JSON.parse(localStorage.getItem('cloudVaultDB')) || { user: null, accounts: [{ id: 1, email: "node1@gmail.com", limit: 14 }], files: [] };
+        let db = JSON.parse(localStorage.getItem('cloudVaultDB')) || { user: null, accounts: [], files: [] };
 
         function saveDB() { localStorage.setItem('cloudVaultDB', JSON.stringify(db)); }
-        function calculateStorageLimit() { return (db.accounts && db.accounts.length ? db.accounts.length : 1) * 14; }
+        function calculateStorageLimit() { return db.accounts.length * 14; }
 
         function formatBytes(b) {
             if (!b || b <= 0) return '0 MB';
@@ -153,7 +156,7 @@
 
         function calculateTotalUsedBytes() {
             let t = 0;
-            db.files.forEach(f => { t += f.sizeBytes ? f.sizeBytes : (typeof f.size==='string'&&f.size.includes('MB')?parseFloat(f.size)*1048576:0); });
+            db.files.forEach(f => { t += f.sizeBytes ? f.sizeBytes : 0; });
             return t;
         }
 
@@ -162,7 +165,7 @@
                 document.getElementById('authScreen').style.display = 'none';
                 document.getElementById('appScreen').style.display = 'flex';
                 document.getElementById('welcomeMsg').innerText = "Welcome, " + db.user;
-                renderData(); fetchStorage(); syncDriveFiles();
+                renderData(); syncDriveFiles();
             } else {
                 document.getElementById('authScreen').style.display = 'block';
                 document.getElementById('appScreen').style.display = 'none';
@@ -182,49 +185,55 @@
             document.querySelectorAll('.bottom-nav a').forEach(el => el.classList.remove('active'));
             document.getElementById('tab-' + t).classList.add('active');
             document.getElementById('menu-' + t).classList.add('active');
+            if (t === 'files') syncDriveFiles();
             renderData();
         }
 
-        async function fetchStorage() {
-            document.getElementById("total-storage").innerText = calculateStorageLimit() + " GB";
-            let ub = calculateTotalUsedBytes();
-            const c = new AbortController(), tid = setTimeout(() => c.abort(), 3000);
-            try {
-                let res = await fetch(WEB_APP_URL, { signal: c.signal }); clearTimeout(tid);
-                let d = await res.json();
-                document.getElementById("used-storage").innerText = formatBytes(d.usedBytes || ub);
-            } catch (e) { document.getElementById("used-storage").innerText = formatBytes(ub); }
-        }
+        async function syncDriveFiles(manual = false) {
+            if (db.accounts.length === 0) {
+                db.files = [];
+                saveDB();
+                renderData();
+                if (manual) alert("No Gmail Node added!");
+                return;
+            }
 
-        async function syncDriveFiles() {
-            const c = new AbortController(), tid = setTimeout(() => c.abort(), 3000);
             try {
-                let res = await fetch(WEB_APP_URL + "?action=getFiles", { signal: c.signal }); clearTimeout(tid);
+                let res = await fetch(WEB_APP_URL + "?action=getFiles");
                 let r = await res.json();
-                if(r && r.files) {
-                    r.files.forEach(df => {
-                        if (!db.files.some(f => f.driveId === df.id)) {
-                            db.files.push({ id: Date.now() + Math.random(), driveId: df.id, name: df.name, size: df.size ? formatBytes(df.sizeBytes) : "Drive", sizeBytes: df.sizeBytes || 0, url: df.url });
-                        }
-                    });
+                if (r && r.files) {
+                    db.files = r.files.map(df => ({
+                        id: df.id,
+                        driveId: df.id,
+                        name: df.name,
+                        size: formatBytes(df.sizeBytes),
+                        sizeBytes: df.sizeBytes || 0,
+                        url: df.url
+                    }));
                     saveDB(); renderData();
+                    if (manual) alert("Drive files synced successfully!");
                 }
-            } catch (e) {}
+            } catch (e) {
+                if (manual) alert("Failed to fetch Google Drive files. Check Web App URL!");
+            }
         }
 
         async function uploadFile() {
+            if (db.accounts.length === 0) return alert("Please add a Gmail Node first!");
             let fi = document.getElementById("fileInput"); if (!fi.files.length) return alert("Select a file!");
             let file = fi.files[0], r = new FileReader();
             r.onload = async function() {
-                alert("Uploading...");
+                alert("Uploading to Google Drive...");
                 try {
                     let res = await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ filename: file.name, mimeType: file.type, bytes: r.result.split(',')[1] }) });
                     let result = await res.json();
                     if (result.status === "success") {
-                        db.files.push({ id: Date.now(), driveId: result.fileId, name: file.name, size: formatBytes(file.size), sizeBytes: file.size, url: result.fileUrl });
-                        saveDB(); fi.value = ''; fetchStorage(); switchTab('files');
-                    } else alert("Upload failed!");
-                } catch(e) { alert("Upload error!"); }
+                        alert("File uploaded successfully!");
+                        fi.value = '';
+                        await syncDriveFiles();
+                        switchTab('files');
+                    } else alert("Upload failed: " + (result.message || "Unknown Error"));
+                } catch(e) { alert("Upload connection error!"); }
             };
             r.readAsDataURL(file);
         }
@@ -235,7 +244,9 @@
             if(email) {
                 if (db.accounts.some(a => a.email.toLowerCase() === email)) return alert("Gmail ID already connected!");
                 db.accounts.push({ id: Date.now(), email: email, limit: 14 });
-                saveDB(); document.getElementById('newEmail').value = ''; renderData(); fetchStorage();
+                saveDB(); document.getElementById('newEmail').value = '';
+                syncDriveFiles();
+                renderData();
             }
         }
 
@@ -245,11 +256,21 @@
         }
         window.onclick = e => { if (!e.target.matches('.dropbtn')) document.querySelectorAll('.dropdown-content').forEach(el => el.classList.remove('show')); };
 
-        function deleteAccount(id) { if(confirm("Remove Node?")) { db.accounts = db.accounts.filter(a => a.id !== id); saveDB(); renderData(); fetchStorage(); } }
+        function deleteAccount(id) {
+            if(confirm("Remove Node?")) {
+                db.accounts = db.accounts.filter(a => a.id !== id);
+                if (db.accounts.length === 0) db.files = [];
+                saveDB(); renderData();
+            }
+        }
+
         async function deleteFile(id, driveId) {
-            if(confirm("Delete File?")) {
-                if(driveId) { try { await fetch(WEB_APP_URL + "?action=deleteFile&id=" + driveId); } catch(e){} }
-                db.files = db.files.filter(f => f.id !== id); saveDB(); renderData(); fetchStorage();
+            if(confirm("Delete File from Google Drive?")) {
+                if(driveId) {
+                    try { await fetch(WEB_APP_URL + "?action=deleteFile&id=" + driveId); } catch(e){}
+                }
+                db.files = db.files.filter(f => f.id !== id);
+                saveDB(); renderData();
             }
         }
 
@@ -262,11 +283,11 @@
             if (!boxes.length) return alert("No duplicate files selected!");
             if (confirm(`Delete ${boxes.length} duplicate files?`)) {
                 for (let cb of boxes) {
-                    let fid = parseFloat(cb.dataset.id), did = cb.dataset.driveId;
-                    if (did && did !== 'null' && did !== 'undefined') { try { await fetch(WEB_APP_URL + "?action=deleteFile&id=" + did); } catch(e){} }
-                    db.files = db.files.filter(f => f.id !== fid);
+                    let did = cb.dataset.driveId;
+                    if (did) { try { await fetch(WEB_APP_URL + "?action=deleteFile&id=" + did); } catch(e){} }
+                    db.files = db.files.filter(f => f.driveId !== did);
                 }
-                saveDB(); renderData(); fetchStorage(); alert("Duplicates deleted!");
+                saveDB(); renderData(); alert("Duplicates deleted!");
             }
         }
 
@@ -278,35 +299,43 @@
             document.getElementById('used-storage').innerText = formatBytes(totalUsedBytes);
 
             let nodeCount = db.accounts.length || 1;
-            let usedPerNode = totalUsedBytes / nodeCount;
+            let usedPerNode = db.accounts.length ? (totalUsedBytes / nodeCount) : 0;
 
             let accBody = document.getElementById('accountsTableBody'); accBody.innerHTML = '';
-            db.accounts.forEach(a => {
-                let limitBytes = a.limit * 1073741824;
-                let freeBytes = Math.max(0, limitBytes - usedPerNode);
+            if (!db.accounts.length) {
+                accBody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--muted);">No Gmail Node connected.</td></tr>`;
+            } else {
+                db.accounts.forEach(a => {
+                    let limitBytes = a.limit * 1073741824;
+                    let freeBytes = Math.max(0, limitBytes - usedPerNode);
 
-                accBody.innerHTML += `<tr>
-                    <td>${a.email}</td>
-                    <td style="color:var(--primary);font-weight:600;">${formatBytes(usedPerNode)}</td>
-                    <td style="color:var(--success);font-weight:600;">${formatBytes(freeBytes)}</td>
-                    <td>${a.limit} GB</td>
-                    <td>
-                        <div class="dropdown"><button class="dropbtn" onclick="toggleDrop('acc-${a.id}')">⋮</button>
-                        <div id="acc-${a.id}" class="dropdown-content"><button class="danger" onclick="deleteAccount(${a.id})"><i class="fa-solid fa-trash"></i> Remove</button></div></div>
-                    </td>
-                </tr>`;
-            });
+                    accBody.innerHTML += `<tr>
+                        <td>${a.email}</td>
+                        <td style="color:var(--primary);font-weight:600;">${formatBytes(usedPerNode)}</td>
+                        <td style="color:var(--success);font-weight:600;">${formatBytes(freeBytes)}</td>
+                        <td>${a.limit} GB</td>
+                        <td>
+                            <div class="dropdown"><button class="dropbtn" onclick="toggleDrop('acc-${a.id}')">⋮</button>
+                            <div id="acc-${a.id}" class="dropdown-content"><button class="danger" onclick="deleteAccount(${a.id})"><i class="fa-solid fa-trash"></i> Remove</button></div></div>
+                        </td>
+                    </tr>`;
+                });
+            }
 
             let fileBody = document.getElementById('filesTableBody'); fileBody.innerHTML = '';
-            db.files.forEach(f => {
-                fileBody.innerHTML += `<tr><td>${f.name}</td><td>${f.size}</td><td>
-                    <div class="dropdown"><button class="dropbtn" onclick="toggleDrop('file-${f.id}')">⋮</button>
-                    <div id="file-${f.id}" class="dropdown-content">
-                        <a href="${f.url || '#'}" target="_blank"><i class="fa-solid fa-eye"></i> View</a>
-                        <button class="danger" onclick="deleteFile(${f.id}, '${f.driveId || ''}')"><i class="fa-solid fa-trash"></i> Delete</button>
-                    </div></div>
-                </td></tr>`;
-            });
+            if (!db.files.length) {
+                fileBody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--muted);">No files found. Add Node or Upload.</td></tr>`;
+            } else {
+                db.files.forEach(f => {
+                    fileBody.innerHTML += `<tr><td>${f.name}</td><td>${f.size}</td><td>
+                        <div class="dropdown"><button class="dropbtn" onclick="toggleDrop('file-${f.id}')">⋮</button>
+                        <div id="file-${f.id}" class="dropdown-content">
+                            <a href="${f.url || '#'}" target="_blank"><i class="fa-solid fa-eye"></i> View</a>
+                            <button class="danger" onclick="deleteFile('${f.id}', '${f.driveId || ''}')"><i class="fa-solid fa-trash"></i> Delete</button>
+                        </div></div>
+                    </td></tr>`;
+                });
+            }
 
             let dupBody = document.getElementById('duplicateTableBody'); dupBody.innerHTML = '';
             let seen = new Set();
