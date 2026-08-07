@@ -199,7 +199,7 @@
             }
 
             try {
-                let res = await fetch(WEB_APP_URL + "?action=getFiles");
+                let res = await fetch(WEB_APP_URL + "https://script.google.com/macros/s/AKfycbw3NP4MLbLPGnA_g4ScDV41O2vCL_HgFgZPEncCltDaWdh9gfmI8m4Vn3DV6iKiImofxg/exec");
                 let r = await res.json();
                 if (r && r.files) {
                     db.files = r.files.map(df => ({
@@ -225,7 +225,7 @@
             r.onload = async function() {
                 alert("Uploading to Google Drive...");
                 try {
-                    let res = await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({ filename: file.name, mimeType: file.type, bytes: r.result.split(',')[1] }) });
+                    let res = await fetch(WEB_APP_URL, "https://script.google.com/macros/s/AKfycbw3NP4MLbLPGnA_g4ScDV41O2vCL_HgFgZPEncCltDaWdh9gfmI8m4Vn3DV6iKiImofxg/exec", { method: "POST", body: JSON.stringify({ filename: file.name, mimeType: file.type, bytes: r.result.split(',')[1] }) });
                     let result = await res.json();
                     if (result.status === "success") {
                         alert("File uploaded successfully!");
@@ -267,7 +267,7 @@
         async function deleteFile(id, driveId) {
             if(confirm("Delete File from Google Drive?")) {
                 if(driveId) {
-                    try { await fetch(WEB_APP_URL + "?action=deleteFile&id=" + driveId); } catch(e){}
+                    try { await fetch(WEB_APP_URL + "https://script.google.com/macros/s/AKfycbw3NP4MLbLPGnA_g4ScDV41O2vCL_HgFgZPEncCltDaWdh9gfmI8m4Vn3DV6iKiImofxg/exec" + driveId); } catch(e){}
                 }
                 db.files = db.files.filter(f => f.id !== id);
                 saveDB(); renderData();
@@ -284,7 +284,7 @@
             if (confirm(`Delete ${boxes.length} duplicate files?`)) {
                 for (let cb of boxes) {
                     let did = cb.dataset.driveId;
-                    if (did) { try { await fetch(WEB_APP_URL + "?action=deleteFile&id=" + did); } catch(e){} }
+                    if (did) { try { await fetch(WEB_APP_URL + "https://script.google.com/macros/s/AKfycbw3NP4MLbLPGnA_g4ScDV41O2vCL_HgFgZPEncCltDaWdh9gfmI8m4Vn3DV6iKiImofxg/exec" + did); } catch(e){} }
                     db.files = db.files.filter(f => f.driveId !== did);
                 }
                 saveDB(); renderData(); alert("Duplicates deleted!");
