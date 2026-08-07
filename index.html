@@ -45,7 +45,8 @@
     </style>
 </head>
 <body>
-    <div id="authScreen">
+    <div id="authScreen" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:999999; display:flex; align-items:center; justify-content:center; background:#f8fafc; touch-action:manipulation; pointer-events:auto;">
+        
         <div class="auth-box">
             <h2 style="color:var(--primary);margin-bottom:15px;text-align:center;"><i class="fa-solid fa-cloud-arrow-up"></i> CloudVault</h2>
             <form onsubmit="handleLogin(event)" style="pointer-events:auto;">
