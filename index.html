@@ -80,7 +80,10 @@
                     <h2 style="font-size:1.1rem;margin-bottom:10px;">Upload File</h2>
                     <div class="card">
                         <input type="file" id="fileInput">
-                        <button onclick="uploadFile()" class="btn"><i class="fa-solid fa-cloud-arrow-up"></i> Upload</button>
+                        <button onclick="uploadFile()" class="btn" id="uploadBtn"><i class="fa-solid fa-cloud-arrow-up"></i> Upload</button>
+                        <!-- Added Progress Elements -->
+                        <progress id="uploadProgress" value="0" max="100" style="width:100%; margin-top:15px; display:none;"></progress>
+                        <div id="progressText" style="text-align:center; font-size:0.8rem; margin-top:5px; color:var(--primary);"></div>
                     </div>
                 </div>
 
@@ -174,14 +177,6 @@
         }
 
         async function syncDriveFiles(manual = false) { 
-            if (db.accounts.length === 0) { 
-                db.files = []; 
-                saveDB(); 
-                renderData(); 
-                if (manual) alert("Please add at least one Gmail Node first!"); 
-                return; 
-            } 
-
             try { 
                 let res = await fetch(WEB_APP_URL); 
                 let r = await res.json(); 
@@ -197,34 +192,53 @@
                     saveDB(); 
                     renderData(); 
                     if (manual) alert("Drive files synced successfully!"); 
-                } else {
-                    if (manual) alert("No files found or Apps Script returned empty data.");
-                }
+                } else if (manual) alert("No files found.");
             } catch (e) { 
-                if (manual) alert("Sync failed. Check Google Apps Script deployment permissions!"); 
+                if (manual) alert("Sync failed!"); 
             } 
         }
 
-        async function uploadFile() { 
+        function uploadFile() { 
             if (db.accounts.length === 0) return alert("Please add a Gmail Node first!"); 
             let fi = document.getElementById("fileInput"); 
             if (!fi.files.length) return alert("Select a file!"); 
-            let file = fi.files[0], r = new FileReader(); 
-            r.onload = async function() { 
-                alert("Uploading to Google Drive..."); 
-                try { 
-                    let res = await fetch(WEB_APP_URL, { 
-                        method: "POST", 
-                        body: JSON.stringify({ filename: file.name, mimeType: file.type, bytes: r.result.split(',')[1] }) 
-                    }); 
-                    let result = await res.json(); 
-                    if (result.status === "success") { 
-                        alert("File uploaded successfully!"); 
-                        fi.value = ''; 
-                        await syncDriveFiles(); 
-                        switchTab('files'); 
-                    } else alert("Upload failed: " + (result.message || "Unknown error")); 
-                } catch(e) { alert("Upload connection error!"); } 
+            
+            let file = fi.files[0];
+            let progress = document.getElementById("uploadProgress");
+            let pText = document.getElementById("progressText");
+            let btn = document.getElementById("uploadBtn");
+
+            let r = new FileReader(); 
+            r.onload = function() { 
+                let xhr = new XMLHttpRequest();
+                xhr.open("POST", WEB_APP_URL, true);
+                
+                // Show Progress UI
+                progress.style.display = "block";
+                btn.disabled = true;
+                
+                xhr.upload.onprogress = function(e) {
+                    if (e.lengthComputable) {
+                        let percent = Math.round((e.loaded / e.total) * 100);
+                        progress.value = percent;
+                        pText.innerText = "Uploading: " + percent + "%";
+                    }
+                };
+
+                xhr.onload = async function() {
+                    progress.style.display = "none";
+                    btn.disabled = false;
+                    pText.innerText = "";
+                    let result = JSON.parse(xhr.responseText);
+                    if (result.status === "success") {
+                        alert("File uploaded!");
+                        fi.value = '';
+                        await syncDriveFiles();
+                        switchTab('files');
+                    } else alert("Upload failed: " + (result.message || "Unknown error"));
+                };
+
+                xhr.send(JSON.stringify({ filename: file.name, mimeType: file.type, bytes: r.result.split(',')[1] }));
             }; 
             r.readAsDataURL(file); 
         }
@@ -252,39 +266,32 @@
         function deleteAccount(id) { 
             if(confirm("Remove Node?")) { 
                 db.accounts = db.accounts.filter(a => a.id !== id); 
-                if (db.accounts.length === 0) db.files = []; 
                 saveDB(); 
                 renderData(); 
             } 
         }
 
         async function deleteFile(id, driveId) { 
-            if(confirm("Delete File from Google Drive?")) { 
-                if(driveId) { 
-                    try { await fetch(WEB_APP_URL + "?action=delete&id=" + driveId); } catch(e){} 
-                } 
+            if(confirm("Delete File?")) { 
+                try { await fetch(WEB_APP_URL + "?action=delete&id=" + driveId); } catch(e){} 
                 db.files = db.files.filter(f => f.id !== id); 
                 saveDB(); 
                 renderData(); 
             } 
         }
 
-        function selectOnlyDuplicates() { 
-            document.querySelectorAll('.dup-checkbox').forEach(cb => { cb.checked = (cb.dataset.isDuplicate === "true"); }); 
-        }
+        function selectOnlyDuplicates() { document.querySelectorAll('.dup-checkbox').forEach(cb => { cb.checked = (cb.dataset.isDuplicate === "true"); }); }
 
         async function deleteSelectedDuplicates() { 
             let boxes = document.querySelectorAll('.dup-checkbox:checked'); 
-            if (!boxes.length) return alert("No duplicate files selected!"); 
-            if (confirm(`Delete ${boxes.length} duplicate files?`)) { 
+            if (!boxes.length) return alert("No files selected!"); 
+            if (confirm(`Delete ${boxes.length} files?`)) { 
                 for (let cb of boxes) { 
                     let did = cb.dataset.driveId; 
-                    if (did) { try { await fetch(WEB_APP_URL + "?action=delete&id=" + did); } catch(e){} } 
+                    try { await fetch(WEB_APP_URL + "?action=delete&id=" + did); } catch(e){} 
                     db.files = db.files.filter(f => f.driveId !== did); 
                 } 
-                saveDB(); 
-                renderData(); 
-                alert("Duplicates deleted!"); 
+                saveDB(); renderData(); alert("Deleted!"); 
             } 
         }
 
@@ -292,48 +299,25 @@
             document.getElementById('statNodes').innerText = db.accounts.length; 
             document.getElementById('statFiles').innerText = db.files.length; 
             document.getElementById('total-storage').innerText = calculateStorageLimit() + " GB"; 
-            let totalUsedBytes = calculateTotalUsedBytes(); 
-            document.getElementById('used-storage').innerText = formatBytes(totalUsedBytes); 
+            document.getElementById('used-storage').innerText = formatBytes(calculateTotalUsedBytes()); 
+            
+            let accBody = document.getElementById('accountsTableBody'); accBody.innerHTML = ''; 
+            db.accounts.forEach(a => { 
+                accBody.innerHTML += `<tr><td>${a.email}</td><td>${formatBytes(calculateTotalUsedBytes()/db.accounts.length)}</td><td>-</td><td>${a.limit} GB</td><td><button class="danger" onclick="deleteAccount(${a.id})"><i class="fa-solid fa-trash"></i></button></td></tr>`; 
+            });
 
-            let nodeCount = db.accounts.length || 1; 
-            let usedPerNode = db.accounts.length ? (totalUsedBytes / nodeCount) : 0; 
-
-            let accBody = document.getElementById('accountsTableBody'); 
-            accBody.innerHTML = ''; 
-            if (!db.accounts.length) { 
-                accBody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--muted);">No Gmail Node connected.</td></tr>`; 
-            } else { 
-                db.accounts.forEach(a => { 
-                    let limitBytes = a.limit * 1073741824; 
-                    let freeBytes = Math.max(0, limitBytes - usedPerNode); 
-                    accBody.innerHTML += `<tr><td>${a.email}</td><td>${formatBytes(usedPerNode)}</td><td>${formatBytes(freeBytes)}</td><td>${a.limit} GB</td><td><div class="dropdown"><button class="dropbtn" onclick="toggleDrop('acc-${a.id}')">⋮</button><div id="acc-${a.id}" class="dropdown-content"><button class="danger" onclick="deleteAccount(${a.id})"><i class="fa-solid fa-trash"></i> Remove</button></div></div></td></tr>`; 
-                }); 
-            } 
-
-            let fileBody = document.getElementById('filesTableBody'); 
-            fileBody.innerHTML = ''; 
-            if (!db.files.length) { 
-                fileBody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--muted);">No files found. Add Node or Upload.</td></tr>`; 
-            } else { 
-                db.files.forEach(f => { 
-                    fileBody.innerHTML += `<tr><td>${f.name}</td><td>${f.size}</td><td><div class="dropdown"><button class="dropbtn" onclick="toggleDrop('file-${f.id}')">⋮</button><div id="file-${f.id}" class="dropdown-content"><a href="${f.url || '#'}" target="_blank"><i class="fa-solid fa-eye"></i> View</a><button class="danger" onclick="deleteFile('${f.id}', '${f.driveId || ''}')"><i class="fa-solid fa-trash"></i> Delete</button></div></div></td></tr>`; 
-                }); 
-            } 
-
-            let dupBody = document.getElementById('duplicateTableBody'); 
-            dupBody.innerHTML = ''; 
-            let seen = new Set(); 
-            if (!db.files.length) { 
-                dupBody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--muted);">No files.</td></tr>`; 
-            } else { 
-                db.files.forEach(f => { 
-                    let isDup = seen.has(f.name.toLowerCase()); 
-                    seen.add(f.name.toLowerCase()); 
-                    dupBody.innerHTML += `<tr><td><input type="checkbox" class="dup-checkbox" data-id="${f.id}" data-drive-id="${f.driveId || ''}" data-is-duplicate="${isDup}"></td><td>${f.name}</td><td>${f.size}</td><td>${isDup ? '<span class="badge-dup">Duplicate</span>' : '<span style="color:var(--success);font-weight:600;font-size:0.7rem;">Original</span>'}</td></tr>`; 
-                }); 
-            } 
+            let fileBody = document.getElementById('filesTableBody'); fileBody.innerHTML = ''; 
+            db.files.forEach(f => { 
+                fileBody.innerHTML += `<tr><td>${f.name}</td><td>${f.size}</td><td><button onclick="deleteFile('${f.id}', '${f.driveId}')"><i class="fa-solid fa-trash"></i></button></td></tr>`; 
+            });
+            
+            let dupBody = document.getElementById('duplicateTableBody'); dupBody.innerHTML = ''; 
+            let seen = new Set();
+            db.files.forEach(f => { 
+                let isDup = seen.has(f.name.toLowerCase()); seen.add(f.name.toLowerCase()); 
+                dupBody.innerHTML += `<tr><td><input type="checkbox" class="dup-checkbox" data-drive-id="${f.driveId}" data-is-duplicate="${isDup}"></td><td>${f.name}</td><td>${isDup ? 'Duplicate' : 'Original'}</td></tr>`; 
+            }); 
         } 
-
         window.onload = checkAuth;
     </script>
 </body>
